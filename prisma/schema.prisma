@@ -1,0 +1,53 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// Scan represents a single dental imaging session submitted by a patient.
+model Scan {
+  id        String   @id @default(cuid())
+  status    String   @default("pending")
+  images    String   @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Notification is created when a scan reaches a terminal state (completed, failed)
+// so clinic staff can act on it from their dashboard.
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String   @default("clinic-default")
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  scanId    String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+// Thread groups a patient-dentist conversation around a single scan or treatment context.
+model Thread {
+  id        String    @id @default(cuid())
+  patientId String
+  messages  Message[]
+  updatedAt DateTime  @updatedAt
+
+  @@index([patientId])
+}
+
+// Message is an individual turn in a patient-dentist thread.
+model Message {
+  id        String   @id @default(cuid())
+  threadId  String
+  content   String
+  sender    String
+  createdAt DateTime @default(now())
+  thread    Thread   @relation(fields: [threadId], references: [id])
+
+  @@index([threadId])
+}
